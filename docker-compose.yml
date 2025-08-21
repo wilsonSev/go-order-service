@@ -1,0 +1,23 @@
+# Раздел со всеми контейнерами, сервисами, которые Compose будет поднимать
+services:
+  db: # имя сервиса
+    image: postgres:15
+    container_name: order_db
+    restart: unless-stopped
+    ports:
+    - "${PG_PORT:-5433}:5432" # Если переменная окружения не задана, мы задаем свою
+    # определяем переменные окружения
+    environment:
+      POSTGRES_USER: ${PG_USER:-postgres}
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-postgres}
+      POSTGRES_DB: ${PG_DB:-order_service}
+    # нужны для надежного хранения данных даже при перезапуске контейнера
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-postgres} -d ${PG_DB:-order_service}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  pgdata:

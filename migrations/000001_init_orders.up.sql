@@ -12,10 +12,18 @@ CREATE TABLE IF NOT EXISTS orders (
   CONSTRAINT uid_matches CHECK (order_uid = data->>'order_uid')
 );
 
--- Создаем триггер для автоматического обновления updated_at
+-- Создаем фунекцию-триггер для автоматического обновления updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at := NOW();
-  RETURN NEW;
+  RETURN NEW; 
 END; $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_orders_set_updated_at ON orders;
+
+-- Создание самого триггера
+CREATE TRIGGER trg_orders_set_updated_at
+BEFORE UPDATE ON orders
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at()

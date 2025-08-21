@@ -1,0 +1,21 @@
+# Как с этим работать?
+
+1. Склонируй репозиторий
+2. Задай свои переменные окружения на основе .env.example
+    и загрузи их в окружение
+    ```bash 
+    export $(cat .env | xargs)
+    ```
+3. Подними базу через Docker Compose
+    ```bash
+    docker compose up -d
+    docker compose ps
+    ```
+4. Примени миграции
+    ```bash
+    migrate -database "$PG_DSN" -path migrations up
+    ```
+5. Проверь, что все встало ровно
+    ```bash
+    psql "$PG_DSN" -c '\dt'
+    ```
