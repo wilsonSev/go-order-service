@@ -7,11 +7,11 @@ import (
 )
 
 type Server struct {
-	repo *storage.OrdersRepo // репа
+	repo *storage.OrderRepo // репа
 	mux *http.ServeMux // маршрутизатор, URL - хендлер
 }
 
-func NewServer(repo *storage.OrdersRepo) *Server {
+func NewServer(repo *storage.OrderRepo) *Server {
 	s := &Server{repo: repo, mux: http.NewServeMux()}
 	s.routes()
 	return s

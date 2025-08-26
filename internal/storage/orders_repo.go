@@ -21,7 +21,7 @@ func NewOrderRepo(pool *pgxpool.Pool) *OrderRepo {
 
 // возвращает JSON по UID
 func (r *OrderRepo) GetByUID(ctx context.Context, uid string) ([]byte, error) {
-	ctx, cancel = context.WithTimeout(ctx, 3*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	var raw []byte
 	// защита от SQL-инъекции с помощью плейсходера + чтение сырых байтов JSON
@@ -32,5 +32,18 @@ func (r *OrderRepo) GetByUID(ctx context.Context, uid string) ([]byte, error) {
 		}
 		return nil, err
 	}
-	retarn raw, nil
+	return raw, nil
+}
+
+func (r *OrderRepo) Upsert(ctx context.Context, uid string, rawJSON []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	_, err := r.pool.Exec(ctx, `
+		INSERT INTO orders (order_uid, data)
+		VALUES ($1, $2::jsonb)
+		ON CONFLICT (order_uid) DO UPDATE
+		SET data = EXCLUDED.data, updated_at = NOW()
+		`, uid, rawJSON)
+		return err
 }
