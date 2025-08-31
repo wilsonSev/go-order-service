@@ -21,7 +21,7 @@ func TestOrdersRepo_UpsertAndGetByUID(t *testing.T) {
 
 	repo := NewOrderRepo(pool)
 
-	uid :="test-" + time.Now().Format("20060102150405")
+	uid := "test-" + time.Now().Format("20060102150405")
 	raw := []byte(`{"order_uid": "` + uid + `", "track_number": "TST123"}`)
 
 	if err := repo.Upsert(context.Background(), uid, raw); err != nil {
@@ -36,5 +36,5 @@ func TestOrdersRepo_UpsertAndGetByUID(t *testing.T) {
 		t.Fatalf("mismatch:\n got=%s\nwant=%s", got, raw)
 	}
 
-	_, _ = pool.Exec(context.Background(), `DELETE FROM orders.orders WHERE order_uid=$1`, uid)
+	_, _ = pool.Exec(context.Background(), `DELETE FROM orders WHERE order_uid=$1`, uid)
 }

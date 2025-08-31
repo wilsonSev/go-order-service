@@ -53,7 +53,7 @@ func (r *OrderRepo) Upsert(ctx context.Context, uid string, rawJSON []byte) erro
 func (r *OrderRepo) ListRecent(ctx context.Context, limit int) (map[string][]byte, error) {
 	rows, err := r.pool.Query(ctx, `
 		SELECT order_uid, data
-		FROM orders.orders
+		FROM orders
 		ORDER BY updated_at DESC
 		LIMIT $1
 	`, limit)
