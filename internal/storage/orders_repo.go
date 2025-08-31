@@ -2,8 +2,8 @@ package storage
 
 import (
 	"context" // контекст
-	"errors" // подключение возможности создавать свои ошибки
-	"time" // подключение времени
+	"errors"  // подключение возможности создавать свои ошибки
+	"time"    // подключение времени
 
 	"github.com/jackc/pgx/v5/pgxpool" // пул соединений для БД
 )
@@ -14,6 +14,7 @@ var ErrNotFound = errors.New("order not found") // создаем свою но�
 type OrderRepo struct {
 	pool *pgxpool.Pool
 }
+
 // определение конструктора
 func NewOrderRepo(pool *pgxpool.Pool) *OrderRepo {
 	return &OrderRepo{pool: pool}
@@ -45,5 +46,31 @@ func (r *OrderRepo) Upsert(ctx context.Context, uid string, rawJSON []byte) erro
 		ON CONFLICT (order_uid) DO UPDATE
 		SET data = EXCLUDED.data, updated_at = NOW()
 		`, uid, rawJSON)
-		return err
+	return err
+}
+
+// функция для прогрева кеша
+func (r *OrderRepo) ListRecent(ctx context.Context, limit int) (map[string][]byte, error) {
+	rows, err := r.pool.Query(ctx, `
+		SELECT order_uid, data
+		FROM orders.orders
+		ORDER BY updated_at DESC
+		LIMIT $1
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make(map[string][]byte, limit)
+	for rows.Next() {
+		var uid string
+		var raw []byte
+		if err := rows.Scan(&uid, &raw); err != nil {
+			return nil, err
+		}
+		out[uid] = raw
+	}
+
+	return out, rows.Err()
 }

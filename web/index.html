@@ -1,0 +1,66 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Order search</title>
+    <link rel="stylesheet" href="/static/style.css?v=2">
+  </head>
+  <body>
+    <div class="container">
+      <h1>Order search</h1>
+      <form id="search-form">
+        <label for="orderId">Order UID:</label>
+        <input id="orderId" name="orderId" type="text" placeholder="Type the order id" required />
+        <button type="submit">Search</button>
+      </form>
+      <div id="status" class="muted"></div>
+      <div id="result" class="card" hidden>
+        <h2>Result</h2>
+        <pre id="json"></pre>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById('search-form');
+      const input = document.getElementById('orderId');
+      const statusEl = document.getElementById('status');
+      const resultEl = document.getElementById('result');
+      const jsonEl = document.getElementById('json');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const uid = input.value.trim();
+        if (!uid) return;
+        resultEl.hidden = true;
+        statusEl.textContent = 'Searching...';
+        const started = performance.now();
+
+        try {
+          const res = await fetch(`/order/${encodeURIComponent(uid)}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+          const ms = Math.round(performance.now() - started);
+
+          if (res.status === 200) {
+            const data = await res.json();
+            jsonEl.textContent = JSON.stringify(data, null, 2);
+            resultEl.hidden = false;
+            statusEl.textContent = `OK • ${ms} ms`;
+            statusEl.className = 'ok';
+          } else if (res.status === 404) {
+            statusEl.textContent = `Not found • ${ms} ms`;
+            statusEl.className = 'warn';
+          } else {
+            const txt = await res.text();
+            statusEl.textContent = `Error ${res.status}: ${txt} • ${ms} ms`;
+            statusEl.className = 'err';
+          }
+        } catch (err) {
+            statusEl.textContent = `Network/server unavailable: ${err}`;
+            statusEl.className = 'err';
+          }
+      });
+    </script>
+  </body>
+</html>

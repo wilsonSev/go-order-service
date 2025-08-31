@@ -2,16 +2,19 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/wilsonSev/go-order-service/internal/cache"
 	"github.com/wilsonSev/go-order-service/internal/storage"
 )
 
 type Server struct {
-	repo *storage.OrderRepo // репа
-	mux *http.ServeMux // маршрутизатор, URL - хендлер
+	repo *cache.CachedOrders // репа
+	mux  *http.ServeMux      // маршрутизатор, URL - хендлер
 }
 
-func NewServer(repo *storage.OrderRepo) *Server {
+func NewServer(repo *cache.CachedOrders) *Server {
 	s := &Server{repo: repo, mux: http.NewServeMux()}
 	s.routes()
 	return s
@@ -19,6 +22,11 @@ func NewServer(repo *storage.OrderRepo) *Server {
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /order/", s.handleGetOrder)
+
+	if _, err := os.Stat("web"); err == nil {
+		s.mux.Handle("/", http.FileServer(http.Dir("web")))
+		s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("web"))))
+	}
 }
 
 // Реализуем интерфейс Handler
@@ -46,6 +54,6 @@ func (s *Server) handleGetOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json") // передаем в header информацию о том, что это шаблон
-	w.WriteHeader(http.StatusOK) // задаем статус OK, так как ошибка не была найдена
+	w.WriteHeader(http.StatusOK)                       // задаем статус OK, так как ошибка не была найдена
 	_, _ = w.Write(raw)
 }
